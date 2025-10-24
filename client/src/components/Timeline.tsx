@@ -2,6 +2,7 @@ import type {Task} from '../types/task';
 import {useDraggable, useDroppable} from "@dnd-kit/core";
 import {CSS} from "@dnd-kit/utilities";
 import {CurrentTimeIndicator} from "./CurrentTimeIndicator.tsx";
+import {useSettingsStore} from "../store/settingsStore.ts";
 
 
 // Check if two tasks overlap in time
@@ -53,7 +54,11 @@ function getTaskSpan(task: Task) {
     };
 }
 
-function ScheduledTask({task, isOverlapping}: { task: Task, isOverlapping: boolean }) {
+function ScheduledTask({task, isOverlapping, startHour}: {
+    task: Task,
+    isOverlapping: boolean,
+    startHour: number
+}) {
     const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({
         id: task.id,
         data: {task},
@@ -62,8 +67,8 @@ function ScheduledTask({task, isOverlapping}: { task: Task, isOverlapping: boole
     const span = getTaskSpan(task);
     if (!span) return null;
 
-    const {startHour, startMinute, totalMinutes} = span;
-    const hoursSinceStart = startHour - 8;
+    const {startHour: taskStartHour, startMinute, totalMinutes} = span;
+    const hoursSinceStart = taskStartHour - startHour;
     const hourHeight = 64;
 
     const topPosition = (hoursSinceStart * hourHeight) + (startMinute / 60 * hourHeight);
@@ -158,8 +163,14 @@ function TimeSlot({
 }
 
 export function Timeline({tasks}: TimelineProps) {
+    const {startHour, endHour} = useSettingsStore();
+
     // Define work hours (8am to 6pm)
-    const hours = Array.from({length: 10}, (_, i) => i + 8); // [8, 9, 10, ..., 17]
+    const hours = Array.from(
+        {length: endHour - startHour},
+        (_, i) => i + startHour
+    );
+
     const scheduledTasks = tasks.filter(task => task.startTime);
     const totalHeight = hours.length * 64; // 10 hours * 64px
 
@@ -168,7 +179,7 @@ export function Timeline({tasks}: TimelineProps) {
             <h2 className="text-xl font-bold text-gray-900 mb-4">Timeline</h2>
 
             <div className="relative" style={{height: `${totalHeight}px`}}>
-                <CurrentTimeIndicator/>
+                <CurrentTimeIndicator startHour={startHour} endHour={endHour}/>
 
                 <div className="relative z-0">
                     {hours.map(hour => (
@@ -187,6 +198,7 @@ export function Timeline({tasks}: TimelineProps) {
                                 key={task.id}
                                 task={task}
                                 isOverlapping={isOverlapping}
+                                startHour={startHour}
                             />
                         )
                     })}

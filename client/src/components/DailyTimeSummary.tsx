@@ -1,10 +1,13 @@
 import type {Task} from '../types/task';
+import {useSettingsStore} from "../store/settingsStore.ts";
 
 interface DailyTimeSummaryProps {
     tasks: Task[];
 }
 
 export function DailyTimeSummary({tasks}: DailyTimeSummaryProps) {
+    const {startHour, endHour} = useSettingsStore();
+
     const totalMinutes = tasks.reduce((sum, task) => sum + (task.timeEstimate || 0), 0);
 
     const scheduledTasks = tasks.filter(task => task.startTime);
@@ -24,6 +27,8 @@ export function DailyTimeSummary({tasks}: DailyTimeSummaryProps) {
 
     const tasksWithEstimates = tasks.filter(task => task.timeEstimate).length;
     const tasksWithoutEstimates = tasks.length - tasksWithEstimates;
+
+    const availableMinutes = (endHour - startHour) * 60;
 
     const formatTime = (hrs: number, mins: number) => {
         if (hrs > 0 && mins > 0) return `${hrs}h ${mins}m`;
@@ -72,7 +77,7 @@ export function DailyTimeSummary({tasks}: DailyTimeSummaryProps) {
                 <div className="flex justify-between">
                     <span className="text-gray-700">Day Planned:</span>
                     <span className="font-semibold text-blue-900">
-                        {Math.round(totalMinutes / 480 * 100)}% of your day planned
+                        {Math.round(totalMinutes / availableMinutes * 100)}% of your day planned
                     </span>
                 </div>
             </div>

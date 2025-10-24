@@ -1,6 +1,11 @@
 import {useEffect, useState} from 'react';
 
-export function CurrentTimeIndicator() {
+interface CurrentTimeIndicatorProps {
+    startHour: number;
+    endHour: number;
+}
+
+export function CurrentTimeIndicator({startHour, endHour}: CurrentTimeIndicatorProps) {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     // Update every minute
@@ -16,16 +21,17 @@ export function CurrentTimeIndicator() {
     const minutes = currentTime.getMinutes();
 
     // Only show if within timeline hours (8 AM to 6 PM)
-    if (hour < 8 || hour >= 18) return null;
+    if (hour < startHour || hour >= endHour) return null;
 
     // Calculate position as percentage
     // Each hour slot is equal height, so we calculate based on:
     // - Which hour we're in (0-9 for 8am-5pm)
     // - How many minutes into that hour (0-59)
-    const hoursSinceStart = hour - 8;
+    const hoursSinceStart = hour - startHour;
     const minuteProgress = minutes / 60;
     const totalProgress = hoursSinceStart + minuteProgress;
-    const percentageFromTop = (totalProgress / 10) * 100; // 10 total hours
+    const totalHours = endHour - startHour;
+    const percentageFromTop = (totalProgress / totalHours) * 100; // 10 total hours
 
     const timeString = currentTime.toLocaleTimeString('en-US', {
         hour: 'numeric',

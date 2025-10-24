@@ -6,10 +6,12 @@ import {taskApi} from "./api/tasks.ts";
 import type {CreateTaskInput} from "./types/task.ts";
 import {useKeyboardShortcut} from "./hooks/useKeyboardShortcut.ts";
 import {CreateTaskModal} from "./components/CreateTaskModal.tsx";
+import {SettingsModal} from "./components/SettingsModal.tsx";
 
 function App() {
     const [view, setView] = useState<'today' | 'tasks'>('today');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
     const queryClient = useQueryClient();
 
     const createMutation = useMutation({
@@ -26,7 +28,10 @@ function App() {
     useKeyboardShortcut('n', () => setShowCreateModal(true));
     useKeyboardShortcut('t', () => setView('today'));
     useKeyboardShortcut('a', () => setView('tasks'));
-    useKeyboardShortcut('Escape', () => setShowCreateModal(false));
+    useKeyboardShortcut('Escape', () => {
+        setShowCreateModal(false);
+        setShowSettingsModal(false);
+    });
 
     return (
         <div>
@@ -57,12 +62,22 @@ function App() {
                             </button>
                         </div>
 
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
-                        >
-                            New Task <kbd className="ml-2 text-xs bg-blue-500 px-1.5 py-0.5 rounded">N</kbd>
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowSettingsModal(true)}
+                                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md hover: bg-gray-100"
+                                title="Settings"
+                            >
+                                ⚙️
+                            </button>
+
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
+                            >
+                                New Task <kbd className="ml-2 text-xs bg-blue-500 px-1.5 py-0.5 rounded">N</kbd>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </nav>
@@ -70,15 +85,19 @@ function App() {
             {/* Content */}
             {view === 'today' ? <Today/> : <Tasks/>}
 
-            {/* Create Task Modal*/}
+            {/* Modals */}
             <CreateTaskModal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 onSubmit={handleCreateTask}
                 isLoading={createMutation.isPending}
             />
+
+            <SettingsModal
+                isOpen={showSettingsModal}
+                onClose={() => setShowSettingsModal(false)}/>
         </div>
-    )
+    );
 }
 
 export default App;
