@@ -1,0 +1,27 @@
+{
+  "name": "sunsama-clone",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:client": "npm run dev --workspace=client"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.2.2",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.15"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.5",
+    "axios": "^1.12.2",
+    "react-router-dom": "^7.9.4",
+    "zustand": "^5.0.8"
+  }
+}
