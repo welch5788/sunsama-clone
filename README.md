@@ -1,17 +1,41 @@
 # Sunsama Clone
 
-A personal task management and time-blocking application inspired by Sunsama. Built to improve knowledge of full-stack development and solve my own productivity challenges.
+A personal task management and time-blocking application inspired by Sunsama. Built to refresh/develop full-stack development knowledge and solve my own productivity challenges.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## ✨ Features
 
-- **Task Management** - Create, edit, complete, and delete tasks
-- **Daily Planning** - Plan which tasks you'll work on today
-- **Visual Time Blocking** - Drag and drop tasks into hourly time slots
-- **Time Estimates** - Assign time estimates to tasks and track your day
-- **Daily Summary** - See total planned time and percentage of day scheduled
-- **Smart Organization** - Unscheduled tasks automatically appear in a separate list
+### Task Management
+- **Create, edit, complete, and delete tasks** - Full CRUD operations
+- **Time estimates** - Assign estimated duration to tasks
+- **Due dates** - Track deadlines
+- **Task descriptions** - Add detailed notes
+
+### Daily Planning
+- **Today view** - Focus on today's planned tasks
+- **Plan for Today** - Drag tasks from backlog to today
+- **Smart rescheduling** - Automatically surface tasks from past dates
+- **Daily summary** - See total time, scheduled vs unscheduled breakdown
+
+### Visual Time Blocking
+- **Drag and drop scheduling** - Drag tasks into hourly time slots
+- **Task duration blocks** - Tasks scale visually based on time estimates
+- **Multi-hour spanning** - Long tasks seamlessly span multiple hours
+- **Overlap detection** - Visual warnings when tasks conflict
+- **Current time indicator** - Red line shows where you are in your day
+
+### Customization
+- **Customizable timeline hours** - Set your work day (6 AM - 10 PM range)
+- **Persistent settings** - Preferences saved locally
+
+### Productivity Features
+- **Keyboard shortcuts** - Navigate and create tasks without the mouse
+  - `N` - Create new task
+  - `T` - Switch to Today view
+  - `A` - Switch to All Tasks view
+  - `Escape` - Close modals
+- **Unscheduled task list** - See what still needs to be time-blocked
 
 ## 🚀 Tech Stack
 
@@ -21,6 +45,7 @@ A personal task management and time-blocking application inspired by Sunsama. Bu
 - **Tailwind CSS v4** - Utility-first styling
 - **React Query** - Server state management
 - **@dnd-kit** - Modern drag and drop
+- **Zustand** - Lightweight state management
 - **Axios** - HTTP client
 
 ### Backend
@@ -42,6 +67,8 @@ sunsama-clone/
 │   │   ├── api/           # API client functions
 │   │   ├── components/    # Reusable UI components
 │   │   ├── pages/         # Full page views
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── store/         # Zustand state management
 │   │   ├── types/         # TypeScript types
 │   │   └── utils/         # Helper functions
 │   └── package.json
@@ -105,11 +132,25 @@ This starts both frontend (port 5173) and backend (port 3001).
 
 ## 🎯 Usage
 
-1. **Create Tasks** - Click "All Tasks" and use the form to add new tasks
-2. **Plan Your Day** - Click "Plan for Today" to add tasks to your daily list
-3. **Time Block** - Drag tasks from "Unscheduled" to specific time slots on the timeline
-4. **Track Progress** - Check off tasks as you complete them
-5. **Reorganize** - Drag tasks between time slots or back to unscheduled
+### Getting Started
+1. **Create Tasks** - Click "New Task" button or press `N`
+2. **Add Time Estimates** - Assign how long each task will take
+3. **Plan Your Day** - Click "Plan for Today" to add tasks to your daily list
+4. **Time Block** - Drag tasks from "Unscheduled" to specific time slots on the timeline
+5. **Track Progress** - Check off tasks as you complete them
+6. **Customize** - Click ⚙️ to set your work hours
+
+### Keyboard Shortcuts
+- `N` - Create new task
+- `T` - Switch to Today view
+- `A` - Switch to All Tasks view
+- `Escape` - Close any open modal
+
+### Tips
+- **Overlapping tasks** turn orange - reschedule to avoid conflicts
+- **Past tasks** can be rescheduled with the "Reschedule for Today" button
+- **The red line** shows your current time in the timeline
+- **Drag tasks between time slots** to reorganize your day
 
 ## 📊 Database Schema
 ```prisma
@@ -128,8 +169,8 @@ model Task {
   completed    Boolean   @default(false)
   dueDate      DateTime?
   plannedDate  DateTime?
-  startTime    String?
-  timeEstimate Int?
+  startTime    String?      # "09:00", "14:30", etc.
+  timeEstimate Int?         # Minutes
   userId       String
   user         User      @relation(...)
 }
@@ -139,26 +180,25 @@ model Task {
 
 - Single user only (temporary hardcoded user)
 - No authentication yet
-- Timeline fixed to 8 AM - 5 PM
 - No mobile app (web only for now)
 - No calendar integrations yet
+- No recurring tasks
 
 ## 🗺️ Roadmap
 
 ### Near Term
 - [ ] User authentication (JWT)
-- [ ] Customizable timeline hours
-- [ ] Pomodoro timer
+- [ ] Pomodoro timer integration
 - [ ] Task notes and subtasks
-- [x] Keyboard shortcuts
+- [ ] Week view for planning ahead
 
 ### Future
 - [ ] Google Calendar integration
 - [ ] Objectives/Projects system
-- [ ] Week view
 - [ ] Recurring tasks
 - [ ] Mobile app (React Native)
 - [ ] Email/Slack integrations
+- [ ] Team collaboration features
 
 ## 🤝 Contributing
 
@@ -174,7 +214,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 - Inspired by [Sunsama](https://sunsama.com)
-- Built while practicing full-stack development
 - Thanks to the React, Prisma, and @dnd-kit communities
 
 ## 📧 Contact
