@@ -9,6 +9,8 @@ interface TaskItemProps {
 }
 
 export function TaskItem({ task, onToggle, onDelete, onPlanForToday, onEdit }: TaskItemProps) {
+    const isPlannedForPast = task.plannedDate && new Date(task.plannedDate).toDateString() !== new Date().toDateString();
+
     return (
         <div className="flex items-start gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
             <input
@@ -43,12 +45,12 @@ export function TaskItem({ task, onToggle, onDelete, onPlanForToday, onEdit }: T
                 >
                     Edit
                 </button>
-                {onPlanForToday && !task.plannedDate && (
+                {onPlanForToday && (!task.plannedDate || isPlannedForPast) && (
                     <button
                         onClick={() => onPlanForToday(task.id)}
                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                        Plan for Today
+                        {isPlannedForPast ? 'Reschedule for Today' : 'Plan for Today'}
                     </button>
                 )}
                 <button
