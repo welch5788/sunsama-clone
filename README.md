@@ -150,7 +150,7 @@ model Task {
 - [ ] Customizable timeline hours
 - [ ] Pomodoro timer
 - [ ] Task notes and subtasks
-- [ ] Keyboard shortcuts
+- [x] Keyboard shortcuts
 
 ### Future
 - [ ] Google Calendar integration
