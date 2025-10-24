@@ -1,6 +1,6 @@
 # Sunsama Clone
 
-A personal task management and time-blocking application inspired by Sunsama. Built to learn full-stack development and solve my own productivity challenges.
+A personal task management and time-blocking application inspired by Sunsama. Built to improve knowledge of full-stack development and solve my own productivity challenges.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
@@ -150,7 +150,7 @@ model Task {
 - [ ] Customizable timeline hours
 - [ ] Pomodoro timer
 - [ ] Task notes and subtasks
-- [ ] Keyboard shortcuts
+- [x] Keyboard shortcuts
 
 ### Future
 - [ ] Google Calendar integration
@@ -174,7 +174,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 - Inspired by [Sunsama](https://sunsama.com)
-- Built while learning full-stack development
+- Built while practicing full-stack development
 - Thanks to the React, Prisma, and @dnd-kit communities
 
 ## 📧 Contact
