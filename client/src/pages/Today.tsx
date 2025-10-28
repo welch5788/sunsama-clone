@@ -7,9 +7,11 @@ import {EditTaskModal} from "../components/EditTaskModal.tsx";
 import {Timeline} from "../components/Timeline.tsx";
 import {DndContext, type DragEndEvent, useDroppable} from "@dnd-kit/core";
 import {DraggableTaskItem} from "../components/DraggableTaskItem.tsx";
+import {PomodoroTimer} from "../components/PomodoroTimer.tsx";
 
 export function Today() {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [timerTask, setTimerTask] = useState<Task | null>(null);
 
     const queryClient = useQueryClient();
 
@@ -107,6 +109,14 @@ export function Today() {
         console.log('Dropped on:', over.data?.current);
     }
 
+    const handleTimerComplete = (taskId: string, minutesSpent: number) => {
+        updateMutation.mutate({
+            id: taskId,
+            data: {actualTime: (tasks?.find(t => t.id === taskId)?.actualTime || 0) + minutesSpent}
+        });
+        setTimerTask(null);
+    };
+
     const todayTasks = tasks?.filter(task => isToday(task.plannedDate));
 
     function UnscheduledDropZone({children}: { children: React.ReactNode }) {
@@ -173,7 +183,7 @@ export function Today() {
                     <div>
                         <Timeline
                             tasks={todayTasks || []}
-                            onUpdateTask={handleUpdateStartTime}
+                            onStartTimer={setTimerTask}
                         />
                     </div>
                 </div>
@@ -184,6 +194,13 @@ export function Today() {
                     onSave={handleSaveEdit}
                     isLoading={updateMutation.isPending}
                 />)}
+                {timerTask && (
+                    <PomodoroTimer
+                        task={timerTask}
+                        onComplete={handleTimerComplete}
+                        onClose={() => setTimerTask(null)}
+                    />
+                )}
             </div>
         </div>
         </DndContext>

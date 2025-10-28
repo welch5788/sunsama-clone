@@ -9,6 +9,7 @@ export function DailyTimeSummary({tasks}: DailyTimeSummaryProps) {
     const {startHour, endHour} = useSettingsStore();
 
     const totalMinutes = tasks.reduce((sum, task) => sum + (task.timeEstimate || 0), 0);
+    const actualMinutes = tasks.reduce((sum, task) => sum + (task.actualTime || 0), 0);
 
     const scheduledTasks = tasks.filter(task => task.startTime);
     const unscheduledTasks = tasks.filter(task => !task.startTime);
@@ -24,6 +25,9 @@ export function DailyTimeSummary({tasks}: DailyTimeSummaryProps) {
 
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
+
+    const actualHours = Math.floor(actualMinutes / 60);
+    const actualMins = actualMinutes % 60;
 
     const tasksWithEstimates = tasks.filter(task => task.timeEstimate).length;
     const tasksWithoutEstimates = tasks.length - tasksWithEstimates;
@@ -65,6 +69,15 @@ export function DailyTimeSummary({tasks}: DailyTimeSummaryProps) {
                     </span>
                 </div>
 
+                {actualMinutes > 0 && (
+                    <div className="flex justify-between">
+                        <span className="text-gray-700">Actual Time:</span>
+                        <span className="font-semibold text-purple-700">
+                            {formatTime(actualHours, actualMins)}
+                        </span>
+                    </div>
+                )}
+
                 {/* Task counts */}
                 <div className="flex justify-between">
                     <span className="text-gray-700">Tasks:</span>
@@ -72,6 +85,7 @@ export function DailyTimeSummary({tasks}: DailyTimeSummaryProps) {
                         {tasks.length} tasks ({tasksWithEstimates} estimated, {tasksWithoutEstimates} not estimated)
                     </span>
                 </div>
+
 
                 {/* Day percentage */}
                 <div className="flex justify-between">

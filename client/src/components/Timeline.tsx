@@ -28,13 +28,6 @@ function getOverlappingTasks(task: Task, allTasks: Task[]): Task[] {
     return allTasks.filter(t => t.id !== task.id && tasksOverlap(task, t));
 }
 
-
-
-interface TimelineProps {
-    tasks: Task[];
-    onUpdateTask: (id: string, startTime: string) => void;
-}
-
 function getTaskSpan(task: Task) {
     if (!task.startTime || !task.timeEstimate) return null;
 
@@ -54,10 +47,11 @@ function getTaskSpan(task: Task) {
     };
 }
 
-function ScheduledTask({task, isOverlapping, startHour}: {
+function ScheduledTask({task, isOverlapping, startHour, onStartTimer}: {
     task: Task,
     isOverlapping: boolean,
-    startHour: number
+    startHour: number,
+    onStartTimer: (task: Task) => void,
 }) {
     const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({
         id: task.id,
@@ -100,9 +94,7 @@ function ScheduledTask({task, isOverlapping, startHour}: {
             <div
                 ref={setNodeRef}
                 style={style}
-                {...listeners}
-                {...attributes}
-                className={`h-full bg-blue-100 border-2 border-blue-400 rounded-lg cursor-move hover:shadow-lg transition-shadow overflow-hidden ${
+                className={`h-full rounded-lg transition-shadow overflow-hidden ${
                     isTiny ? 'p-1 flex items-center' : 'p-2'
                 } ${
                     isOverlapping
@@ -110,15 +102,39 @@ function ScheduledTask({task, isOverlapping, startHour}: {
                         : 'bg-blue-100 border-2 border-blue-400'
                 }`}
             >
-                <div className="w-full min-w-0">
-                    <div className={`font-medium truncate ${isTiny ? 'text-xs' : 'text-sm'}`}>
-                        {isOverlapping && '⚠️ '}
-                        {task.title}
+                <div className="w-full min-w-0 flex items-center justify-between gap-2">
+                    <div
+                        {...listeners}
+                        {...attributes}
+                        className="cursor-move hover:bg-gray-200 rounded p-0.5 flex-shrink-0"
+                        title="Drag to reschedule"
+                    >
+                        <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16"/>
+                        </svg>
                     </div>
-                    {!isTiny && task.timeEstimate && (
-                        <div className="text-xs text-gray-600 mt-0.5">
-                            ⏱️ {task.timeEstimate} min
+                    <div className="flex-1 min-w-0">
+                        <div className={`font-medium truncate ${isTiny ? 'text-xs' : 'text-sm'}`}>
+                            {isOverlapping && '⚠️ '}
+                            {task.title}
                         </div>
+                        {!isTiny && task.timeEstimate && (
+                            <div className="text-xs text-gray-600 mt-0.5">
+                                ⏱️ {task.timeEstimate} min
+                            </div>
+                        )}
+                    </div>
+                    {!isTiny && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onStartTimer(task);
+                            }}
+                            className="flex-shrink-0 text-lg hover: scale-110 transition-transform"
+                            title="Start Pomodoro"
+                        >
+                            🍅
+                        </button>
                     )}
                 </div>
             </div>
@@ -162,7 +178,13 @@ function TimeSlot({
     );
 }
 
-export function Timeline({tasks}: TimelineProps) {
+
+interface TimelineProps {
+    tasks: Task[];
+    onStartTimer: (task: Task) => void;
+}
+
+export function Timeline({tasks, onStartTimer}: TimelineProps) {
     const {startHour, endHour} = useSettingsStore();
 
     // Define work hours (8am to 6pm)
@@ -199,6 +221,7 @@ export function Timeline({tasks}: TimelineProps) {
                                 task={task}
                                 isOverlapping={isOverlapping}
                                 startHour={startHour}
+                                onStartTimer={onStartTimer}
                             />
                         )
                     })}

@@ -6,6 +6,7 @@ export interface UpdateTaskInput {
     description?: string;
     dueDate?: string;
     timeEstimate?: number;
+    actualTime?: number;
     startTime?: string;
 }
 

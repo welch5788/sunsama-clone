@@ -7,6 +7,7 @@ export interface Task {
     plannedDate: string | null;
     startTime: string | null;
     timeEstimate: number | null;
+    actualTime: number | null;
     createdAt: string;
     updatedAt: string;
     userId: string;
