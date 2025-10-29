@@ -1,7 +1,7 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {taskApi, type UpdateTaskInput} from "../api/tasks.ts";
 import {DailyTimeSummary} from "../components/DailyTimeSummary.tsx";
-import {useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import type {Task} from "../types/task.ts";
 import {EditTaskModal} from "../components/EditTaskModal.tsx";
 import {Timeline} from "../components/Timeline.tsx";
@@ -11,7 +11,15 @@ import {PomodoroTimer} from "../components/PomodoroTimer.tsx";
 
 export function Today() {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
-    const [timerTask, setTimerTask] = useState<Task | null>(null);
+    const [activeTimer, setActiveTimer] = useState<{
+        task: Task;
+        timeLeft: number;
+        isRunning: boolean;
+        totalTimeSpent: number;
+    } | null>(null);
+    const [showTimerModal, setShowTimerModal] = useState(false);
+
+    const timerIntervalRef = useRef<number | null>(null);
 
     const queryClient = useQueryClient();
 
@@ -20,6 +28,33 @@ export function Today() {
         queryKey: ['tasks'],
         queryFn: taskApi.getTasks,
     });
+
+    useEffect(() => {
+        if (activeTimer && activeTimer.isRunning && activeTimer.timeLeft > 0) {
+            timerIntervalRef.current = window.setInterval(() => {
+                setActiveTimer(prev => {
+                    if (!prev) return null;
+
+                    const newTimeLeft = prev.timeLeft - 1;
+
+                    if (newTimeLeft <= 0) {
+                        const minutesSpent = Math.ceil((1500 + prev.totalTimeSpent) / 60);
+                        handleTimerComplete(prev.task.id, minutesSpent);
+                        return null;
+                    }
+
+                    return {
+                        ...prev,
+                        timeLeft: newTimeLeft
+                    };
+                });
+            }, 1000);
+        } else {
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+            }
+        }
+    }, [activeTimer?.isRunning, activeTimer?.timeLeft]);
 
     // Helper function to filter today's tasks
     const isToday = (dateString: string | null) => {
@@ -109,12 +144,59 @@ export function Today() {
         console.log('Dropped on:', over.data?.current);
     }
 
+    const handleStartTimer = (task: Task) => {
+        if (activeTimer && activeTimer.task.id === task.id) {
+            setShowTimerModal(true);
+            return;
+        }
+
+        setActiveTimer({
+            task,
+            timeLeft: 1500,
+            isRunning: false,
+            totalTimeSpent: 0,
+        });
+        setShowTimerModal(true);
+    };
+
+    const handleTimerUpdate = (timeLeft: number, isRunning: boolean, totalTimeSpent: number) => {
+        if (activeTimer) {
+            setActiveTimer({
+                ...activeTimer,
+                timeLeft,
+                isRunning,
+                totalTimeSpent,
+            });
+        }
+    };
+
     const handleTimerComplete = (taskId: string, minutesSpent: number) => {
         updateMutation.mutate({
             id: taskId,
             data: {actualTime: (tasks?.find(t => t.id === taskId)?.actualTime || 0) + minutesSpent}
         });
-        setTimerTask(null);
+        setActiveTimer(null);
+        setShowTimerModal(false);
+    };
+
+    const handleCloseTimerModal = () => {
+        setShowTimerModal(false);
+    };
+
+    const handleStopTimer = () => {
+        if (activeTimer) {
+            const timeSpent = 1500 - activeTimer.timeLeft + activeTimer.totalTimeSpent;
+
+            if (timeSpent > 0) {
+                const minutesSpent = Math.ceil(timeSpent / 60);
+                updateMutation.mutate({
+                    id: activeTimer.task.id,
+                    data: {actualTime: (tasks?.find(t => t.id === activeTimer.task.id)?.actualTime || 0) + minutesSpent}
+                });
+            }
+        }
+        setActiveTimer(null);
+        setShowTimerModal(false);
     };
 
     const todayTasks = tasks?.filter(task => isToday(task.plannedDate));
@@ -183,10 +265,24 @@ export function Today() {
                     <div>
                         <Timeline
                             tasks={todayTasks || []}
-                            onStartTimer={setTimerTask}
+                            onStartTimer={handleStartTimer}
                         />
                     </div>
                 </div>
+                {activeTimer && !showTimerModal && (
+                    <button
+                        onClick={() => setShowTimerModal(true)}
+                        className="fixed bottom-8 bg-red-500 text-white rounded-full p-4 shadow-lg hover:bg-red-600 transition-all hover:scale-110 z-40"
+                        title="Open timer"
+                    >
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">🍅</span>
+                            <div className="text-sm font-medium">
+                                {Math.floor(activeTimer.timeLeft / 60)}:{(activeTimer.timeLeft % 60).toString().padStart(2, "0")}
+                            </div>
+                        </div>
+                    </button>
+                )}
                 {editingTask && (<EditTaskModal
                     task={editingTask!}
                     isOpen={true}
@@ -194,11 +290,16 @@ export function Today() {
                     onSave={handleSaveEdit}
                     isLoading={updateMutation.isPending}
                 />)}
-                {timerTask && (
+                {activeTimer && showTimerModal && (
                     <PomodoroTimer
-                        task={timerTask}
+                        task={activeTimer.task}
+                        initialTimeLeft={activeTimer.timeLeft}
+                        initialIsRunning={activeTimer.isRunning}
+                        initialTotalTimeSpent={activeTimer.totalTimeSpent}
+                        onUpdate={handleTimerUpdate}
                         onComplete={handleTimerComplete}
-                        onClose={() => setTimerTask(null)}
+                        onClose={handleCloseTimerModal}
+                        onStop={handleStopTimer}
                     />
                 )}
             </div>

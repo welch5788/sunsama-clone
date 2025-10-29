@@ -2,15 +2,29 @@ import type {Task} from "../types/task.ts";
 import {useEffect, useRef, useState} from "react";
 
 interface PomodoroTimerProps {
-    task: Task;
-    onComplete: (taskId: string, minutesSpent: number) => void;
-    onClose: () => void;
+    task: Task,
+    onComplete: (taskId: string, minutesSpent: number) => void,
+    onClose: () => void,
+    initialTimeLeft?: number,
+    initialIsRunning?: boolean,
+    initialTotalTimeSpent?: number,
+    onUpdate?: (timeLeft: number, isRunning: boolean, totalTimeSpent: number) => void,
+    onStop?: () => void
 }
 
-export function PomodoroTimer({task, onComplete, onClose}: PomodoroTimerProps) {
-    const [timeLeft, setTimeLeft] = useState(1500);
-    const [isRunning, setIsRunning] = useState(false);
-    const [totalTimeSpent, setTotalTimeSpent] = useState(0);
+export function PomodoroTimer({
+                                  task,
+                                  onComplete,
+                                  onClose,
+                                  initialTimeLeft = 1500,
+                                  initialIsRunning = false,
+                                  initialTotalTimeSpent = 0,
+                                  onUpdate,
+                                  onStop
+                              }: PomodoroTimerProps) {
+    const [timeLeft, setTimeLeft] = useState(initialTimeLeft);
+    const [isRunning, setIsRunning] = useState(initialIsRunning);
+    const [totalTimeSpent, setTotalTimeSpent] = useState(initialTotalTimeSpent);
     const intervalRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -39,15 +53,28 @@ export function PomodoroTimer({task, onComplete, onClose}: PomodoroTimerProps) {
         };
     }, [isRunning, timeLeft]);
 
-    const handleStart = () => setIsRunning(true);
+    const handleStart = () => {
+        setIsRunning(true);
+        if (onUpdate) {
+            onUpdate(timeLeft, true, totalTimeSpent);
+        }
+    }
     const handlePause = () => {
         setIsRunning(false);
-        setTotalTimeSpent(prev => prev + (1500 - timeLeft));
+        const newTotalTimeSpent = totalTimeSpent + (1500 - timeLeft);
+        setTotalTimeSpent(newTotalTimeSpent);
+        if (onUpdate) {
+            onUpdate(timeLeft, false, newTotalTimeSpent);
+        }
     };
+
     const handleReset = () => {
         setIsRunning(false);
         setTimeLeft(1500);
         setTotalTimeSpent(0);
+        if (onUpdate) {
+            onUpdate(1500, false, 0);
+        }
     };
 
     const formatTime = (seconds: number) => {
@@ -90,30 +117,40 @@ export function PomodoroTimer({task, onComplete, onClose}: PomodoroTimerProps) {
                 </div>
 
                 {/* Controls */}
-                <div className="flex gap-3">
-                    {!isRunning ? (
+                <div className="space-y-3">
+                    <div className="flex gap-3">
+                        {!isRunning ? (
+                            <button
+                                onClick={handleStart}
+                                className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 font-medium"
+                            >
+                                {timeLeft === 1500 ? 'Start' : 'Resume'}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handlePause}
+                                className="flex-1 bg-orange-600 text-white py-3 px-4 rounded-md hover:bg-orange-700 font-medium"
+                            >
+                                Pause
+                            </button>
+                        )}
                         <button
-                            onClick={handleStart}
-                            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 font-medium"
+                            onClick={handleReset}
+                            className="px-4 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                         >
-                            {timeLeft === 1500 ? 'Start' : 'Resume'}
+                            Reset
                         </button>
-                    ) : (
+                    </div>
+
+                    {timeLeft < 1500 && onStop && (
                         <button
-                            onClick={handlePause}
-                            className="flex-1 bg-orange-600 text-white py-3 px-4 rounded-md hover:bg-orange-700 font-medium"
+                            onClick={onStop}
+                            className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 font-medium"
                         >
-                            Pause
+                            Stop & Save Progress
                         </button>
                     )}
-                    <button
-                        onClick={handleReset}
-                        className="px-4 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                    >
-                        Reset
-                    </button>
                 </div>
-
                 {/* Task Info */}
                 {task.timeEstimate && (
                     <div className="mt-6 pt-6 border-t">
