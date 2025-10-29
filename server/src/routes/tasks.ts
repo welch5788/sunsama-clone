@@ -103,7 +103,7 @@ router.patch('/:id/plan', async (req, res) => {
 router.patch('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        let {title, description, dueDate, timeEstimate, startTime} = req.body;
+        let {title, description, dueDate, timeEstimate, startTime, actualTime} = req.body;
 
         const task = await prisma.task.findUnique({ where: { id } });
         if (!task) {
@@ -117,7 +117,8 @@ router.patch('/:id', async (req, res) => {
                 description,
                 dueDate: dueDate ? new Date(dueDate) : null,
                 timeEstimate,
-                startTime
+                startTime,
+                actualTime
             },
         });
         res.json(updatedTask);

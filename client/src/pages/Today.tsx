@@ -8,10 +8,12 @@ import {Timeline} from "../components/Timeline.tsx";
 import {DndContext, type DragEndEvent, useDroppable} from "@dnd-kit/core";
 import {DraggableTaskItem} from "../components/DraggableTaskItem.tsx";
 import {PomodoroTimer} from "../components/PomodoroTimer.tsx";
+import {useTimerStore} from "../store/timerStore.ts";
 
 export function Today() {
+    const {activeTask, timeLeft, isRunning, setActiveTask, stopAndClear} = useTimerStore();
     const [editingTask, setEditingTask] = useState<Task | null>(null);
-    const [timerTask, setTimerTask] = useState<Task | null>(null);
+    const [showTimerModal, setShowTimerModal] = useState(false);
 
     const queryClient = useQueryClient();
 
@@ -109,12 +111,30 @@ export function Today() {
         console.log('Dropped on:', over.data?.current);
     }
 
+    const handleStartTimer = (task: Task) => {
+        setActiveTask(task);
+        setShowTimerModal(true);
+    };
+
     const handleTimerComplete = (taskId: string, minutesSpent: number) => {
-        updateMutation.mutate({
-            id: taskId,
-            data: {actualTime: (tasks?.find(t => t.id === taskId)?.actualTime || 0) + minutesSpent}
-        });
-        setTimerTask(null);
+        const currentTask = tasks?.find(t => t.id === taskId);
+        updateMutation.mutate(
+            {
+                id: taskId,
+                data: {actualTime: (currentTask?.actualTime || 0) + minutesSpent}
+            },
+            {
+                onSuccess: () => {
+                    stopAndClear();
+                    setShowTimerModal(false);
+                },
+                onError: (error) => {
+                    console.error(error);
+                    setShowTimerModal(false);
+                }
+            }
+        );
+        setShowTimerModal(false);
     };
 
     const todayTasks = tasks?.filter(task => isToday(task.plannedDate));
@@ -183,10 +203,26 @@ export function Today() {
                     <div>
                         <Timeline
                             tasks={todayTasks || []}
-                            onStartTimer={setTimerTask}
+                            onStartTimer={handleStartTimer}
                         />
                     </div>
                 </div>
+                {activeTask && !showTimerModal && (
+                    <button
+                        onClick={() => setShowTimerModal(true)}
+                        className={`fixed bottom-8 right-8 text-white rounded-full p-4 shadow-lg transition-all hover:scale-110 z-40 ${
+                            isRunning ? 'bg-red-500 hover:bg-red-600 animate-pulse' : 'bg-orange-500 hover:bg-orange-600'
+                        }`}
+                        title={isRunning ? "Timer running - click to view" : "Timer paused - click to view"}
+                    >
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">🍅</span>
+                            <div className="text-sm font-mono font-bold">
+                                {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}
+                            </div>
+                        </div>
+                    </button>
+                )}
                 {editingTask && (<EditTaskModal
                     task={editingTask!}
                     isOpen={true}
@@ -194,11 +230,10 @@ export function Today() {
                     onSave={handleSaveEdit}
                     isLoading={updateMutation.isPending}
                 />)}
-                {timerTask && (
+                {activeTask && showTimerModal && (
                     <PomodoroTimer
-                        task={timerTask}
+                        onClose={() => setShowTimerModal(false)}
                         onComplete={handleTimerComplete}
-                        onClose={() => setTimerTask(null)}
                     />
                 )}
             </div>
