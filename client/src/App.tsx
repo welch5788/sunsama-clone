@@ -7,9 +7,10 @@ import type {CreateTaskInput} from "./types/task.ts";
 import {useKeyboardShortcut} from "./hooks/useKeyboardShortcut.ts";
 import {CreateTaskModal} from "./components/CreateTaskModal.tsx";
 import {SettingsModal} from "./components/SettingsModal.tsx";
+import {Week} from "./pages/Week.tsx";
 
 function App() {
-    const [view, setView] = useState<'today' | 'tasks'>('today');
+    const [view, setView] = useState<'today' | 'tasks' | 'week'>('today');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const queryClient = useQueryClient();
@@ -28,6 +29,7 @@ function App() {
     useKeyboardShortcut('n', () => setShowCreateModal(true));
     useKeyboardShortcut('t', () => setView('today'));
     useKeyboardShortcut('a', () => setView('tasks'));
+    useKeyboardShortcut('w', () => setView('week'));
     useKeyboardShortcut('Escape', () => {
         setShowCreateModal(false);
         setShowSettingsModal(false);
@@ -49,6 +51,16 @@ function App() {
                                 }`}
                             >
                                 Today <kbd className="ml-2 text-xs bg-gray-100 px-1.5 py-0.5 rounded">T</kbd>
+                            </button>
+                            <button
+                                onClick={() => setView('week')}
+                                className={`px-3 py-2 font-medium ${
+                                    view === 'week'
+                                        ? 'text-blue-600 border-b-2 border-blue-600'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                Week <kbd className="ml-2 text-xs bg-gray-100 px-1.5 py-0.5 rounded">W</kbd>
                             </button>
                             <button
                                 onClick={() => setView('tasks')}
@@ -83,7 +95,7 @@ function App() {
             </nav>
 
             {/* Content */}
-            {view === 'today' ? <Today/> : <Tasks/>}
+            {view === 'today' ? <Today/> : view === 'tasks' ? <Tasks/> : <Week/>}
 
             {/* Modals */}
             <CreateTaskModal
