@@ -1,6 +1,7 @@
 export function getWeekDates(date: Date = new Date()): Date[] {
     const dates: Date[] = [];
     const current = new Date(date);
+    current.setHours(0, 0, 0, 0);
 
     // get to Monday (week start)
     const day = current.getDay();

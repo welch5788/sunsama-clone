@@ -1,12 +1,36 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {formatWeekRange, getWeekDates} from "../utils/dateUtils.ts";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {taskApi, type UpdateTaskInput} from "../api/tasks.ts";
 import type {Task} from "../types/task.ts";
+import {WeekTaskCard} from "../components/WeekTaskCard.tsx";
 
 export function Week() {
     const [currentWeek, setCurrentWeek] = useState(new Date());
     const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                return;
+            }
+
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prev = new Date(currentWeek);
+                prev.setDate(prev.getDate() - 7);
+                setCurrentWeek(prev);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const next = new Date(currentWeek);
+                next.setDate(next.getDate() + 7);
+                setCurrentWeek(next);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [currentWeek]);
 
     const weekDates = getWeekDates(currentWeek);
 
@@ -30,6 +54,8 @@ export function Week() {
             return taskDate === targetDate;
         })
     }
+
+    const unplannedTasks = allTasks.filter(task => !task.plannedDate);
 
     const handleDragStart = (task: Task) => {
         setDraggedTask(task);
@@ -55,6 +81,13 @@ export function Week() {
     const updateTaskMutation = useMutation({
         mutationFn: ({id, data}: { id: string; data: UpdateTaskInput }) =>
             taskApi.updateTask(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({queryKey: ['tasks']});
+        },
+    });
+
+    const toggleTaskMutation = useMutation({
+        mutationFn: (id: string) => taskApi.toggleTask(id),
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['tasks']});
         },
@@ -97,6 +130,33 @@ export function Week() {
                 </div>
             </div>
 
+            {/* Unplanned Tasks Section */}
+
+            {unplannedTasks.length > 0 && (
+                <div className="mb-6 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                        Unplanned Tasks ({unplannedTasks.length})
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {unplannedTasks.map(task => (
+                            <div
+                                key={task.id}
+                                draggable
+                                onDragStart={() => handleDragStart(task)}
+                                className="bg-white border border-gray-300 rounded px-3 py-2 text-sm cursor-move hover:shadow-md transition-shadow"
+                            >
+                                <div className="font-medium">{task.title}</div>
+                                {task.timeEstimate && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {Math.floor(task.timeEstimate / 60)}h {task.timeEstimate % 60}m
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* 7-day grid goes here */}
             <div className="grid grid-cols-7 gap-4">
                 {weekDates.map((date, i) => {
@@ -128,14 +188,12 @@ export function Week() {
                                     </div>
                                 ) : (
                                     dayTasks.map(task => (
-                                        <div
+                                        <WeekTaskCard
                                             key={task.id}
-                                            draggable
-                                            onDragStart={() => handleDragStart(task)}
-                                            className="bg-gray-50 border rounded p-2 text-sm"
-                                        >
-                                            {task.title}
-                                        </div>
+                                            task={task}
+                                            onToggleComplete={toggleTaskMutation.mutate}
+                                            onDragStart={handleDragStart}
+                                        />
                                     ))
                                 )}
                             </div>
